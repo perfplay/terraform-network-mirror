@@ -20,6 +20,7 @@ def parse_args():
     parser.add_argument('--registry-url',
                         default="https://registry.terraform.io",
                         help='Terraform registry URL')
+    parser.add_argument('--platform', default="darwin_arm64", help='Platform for the provider')
     parser.add_argument('--run-mirror-creation', action='store_true', help='Run mirror creation for all providers')
     return parser.parse_args()
 
@@ -128,7 +129,7 @@ def main():
         for json_file in json_files:
             if json_file:
                 logger.info(f"Running mirror creation for {json_file}")
-                command = ["./create-mirror.sh", json_file]
+                command = ["./create-mirror.sh", "-p", args.platform, json_file]
                 logger.info(f"Running command: {command}")
                 try:
                     result = run_subprocess_popen(command)

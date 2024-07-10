@@ -2,15 +2,39 @@
 
 set -e -u -o pipefail
 
-[[ $# -eq 0 ]] && echo "Please Pass a Settings File Path" && exit 1
+usage() {
+    echo "Usage: $0 [-p platform] [-m mirror_dir] settings_file"
+    exit 1
+}
+
+platform="linux_amd64"
+mirror_dir="./mirror"
+error_occurred=0
+
+while getopts ":p:m:" opt; do
+    case ${opt} in
+        p )
+            platform=$OPTARG
+            ;;
+        m )
+            mirror_dir=$OPTARG
+            ;;
+        \? )
+            usage
+            ;;
+    esac
+done
+shift $((OPTIND -1))
+
+[[ $# -eq 0 ]] && echo "Please pass a settings file path" && exit 1
 
 settings_file=$1
 
-platform="linux_amd64"
-# platform="darwin_amd64" # if you want to test from a mac
-mirror_dir="./mirror"
+echo "Settings file: $settings_file"
+echo "Platform: $platform"
+echo "Mirror directory: $mirror_dir"
 
-mkdir -p ${mirror_dir}
+mkdir -p "${mirror_dir}"
 
 download_provider(){
   local provider_namespace=$1
@@ -28,7 +52,12 @@ terraform {
   }
 }
 EOF
-  terraform providers mirror -platform=${platform} ./
+  if terraform providers mirror -platform="${platform}" ./; then
+    echo "Provider ${provider_namespace}/${provider_name}:${provider_version} downloaded successfully."
+  else
+    echo "Failed to download provider ${provider_namespace}/${provider_name}:${provider_version}, continuing..."
+    error_occurred=1
+  fi
   rm main.tf
 }
 
@@ -42,7 +71,7 @@ echo "  Providers:         ${provider_names}"
 echo
 
 echo "Downloading Providers Locally"
-cd ${mirror_dir}
+cd "${mirror_dir}"
 for row in $(echo "${providers}" | jq -r '.[] | [.namespace, .name, .versions] | @base64'); do
   _namespace() {
     echo "${row}" | base64 --decode | jq -r .[0]
@@ -63,3 +92,8 @@ for row in $(echo "${providers}" | jq -r '.[] | [.namespace, .name, .versions] |
     download_provider "$ns" "$n" "$v"
   done
 done
+
+if [[ $error_occurred -ne 0 ]]; then
+  echo "Errors occurred during provider downloads."
+  exit 1
+fi

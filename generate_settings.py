@@ -50,7 +50,7 @@ def fetch_versions(namespace, provider, registry_url, minimal_version=None, vali
                 logger.warning(f"Invalid version: {ver['version']} - {e}")
 
         filtered_versions.sort()
-        logger.info(f"Fetched versions for {namespace}/{provider}: {filtered_versions}")
+        logger.info(f"Fetched versions for {namespace}/{provider}: {[str(ver) for ver in filtered_versions]}")
         return filtered_versions
     except requests.RequestException as e:
         logger.error(f"Failed to fetch versions for {namespace}/{provider}: {e}")

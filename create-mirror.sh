@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e -u -o pipefail
 
@@ -9,7 +9,7 @@ settings_file=$1
 platform="linux_amd64"
 # platform="darwin_amd64" # if you want to test from a mac
 mirror_dir="./mirror"
-working_dir=$(pwd)
+
 mkdir -p ${mirror_dir}
 
 download_provider(){
@@ -32,9 +32,9 @@ EOF
   rm main.tf
 }
 
-settings_json=$(cat ${settings_file})
-providers=$(echo ${settings_json} | jq '[ .providers[] ]')
-provider_names=$(echo ${settings_json} | jq '[ .providers[].name ]')
+settings_json=$(cat "${settings_file}")
+providers=$(echo "${settings_json}" | jq '[ .providers[] ]')
+provider_names=$(echo "${settings_json}" | jq '[ .providers[].name ]')
 
 echo
 echo "Mirror Settings:"
@@ -43,15 +43,15 @@ echo
 
 echo "Downloading Providers Locally"
 cd ${mirror_dir}
-for row in $(echo ${providers} | jq -r '.[] | [.namespace, .name, .versions] | @base64'); do
+for row in $(echo "${providers}" | jq -r '.[] | [.namespace, .name, .versions] | @base64'); do
   _namespace() {
-    echo ${row} | base64 --decode | jq -r .[0]
+    echo "${row}" | base64 --decode | jq -r .[0]
   }
   _name() {
-    echo ${row} | base64 --decode | jq -r .[1]
+    echo "${row}" | base64 --decode | jq -r .[1]
   }
   _versions() {
-    echo ${row} | base64 --decode | jq -r .[2]
+    echo "${row}" | base64 --decode | jq -r .[2]
   }
 
   # echo $(_name) $(_versions)
@@ -60,6 +60,6 @@ for row in $(echo ${providers} | jq -r '.[] | [.namespace, .name, .versions] | @
     n=$(_name)
     v=${version}
 
-    download_provider $ns $n $v
+    download_provider "$ns" "$n" "$v"
   done
 done

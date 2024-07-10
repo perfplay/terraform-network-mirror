@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e -u -o pipefail
 
@@ -6,8 +6,6 @@ set -e -u -o pipefail
 
 settings_file=$1
 
-platform="linux_amd64"
-# platform="darwin_amd64" # if you want to test from a mac
 mirror_dir="./mirror/core"
 working_dir=$(pwd)
 mkdir -p ${mirror_dir}
@@ -21,8 +19,8 @@ download_core(){
   curl -Lo "${working_dir}/${mirror_dir}/${file_name}" "${url}"
 }
 
-settings_json=$(cat ${settings_file})
-core_versions=$(echo ${settings_json} | jq '[.core[]]')
+settings_json=$(cat "${settings_file}" )
+core_versions=$(echo "${settings_json}" | jq '[.core[]]')
 
 echo
 echo "Terraform Core Settings:"
@@ -31,6 +29,6 @@ echo
 
 echo "Downloading Terraform Versions Locally"
 cd ${mirror_dir}
-for version in $(echo ${core_versions} | jq -r '.[]'); do
-  download_core $version
+for version in $(echo "${core_versions}" | jq -r '.[]'); do
+  download_core "$version"
 done

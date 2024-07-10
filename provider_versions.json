@@ -3,10 +3,66 @@
     {
       "namespace": "hashicorp",
       "name": "aws",
-      "minimal_version": "5.50",
+      "minimal_version": "5.53",
       "versions": [
-        "5.42.0",
-        "5.47.0"
+        "5.21.0",
+        "5.35.0"
+      ]
+    },
+    {
+      "namespace": "hashicorp",
+      "name": "helm",
+      "minimal_version": "2.13",
+      "versions": [
+        "2.11.0"
+      ]
+    },
+    {
+      "namespace": "hashicorp",
+      "name": "local",
+      "minimal_version": "2.5",
+      "versions": [
+        "2.4.0"
+      ]
+    },
+    {
+      "namespace": "hashicorp",
+      "name": "kubernetes",
+      "minimal_version": "2.30",
+      "versions": [
+        "2.23.0"
+      ]
+    },
+    {
+      "namespace": "hashicorp",
+      "name": "random",
+      "minimal_version": "3.6",
+      "versions": [
+        "3.6.0"
+      ]
+    },
+    {
+      "namespace": "hashicorp",
+      "name": "vault",
+      "minimal_version": "4.2",
+      "versions": [
+        "3.21.0"
+      ]
+    },
+    {
+      "namespace": "alekc",
+      "name": "kubectl",
+      "minimal_version": "2.0.3",
+      "versions": [
+        "2.0.4"
+      ]
+    },
+    {
+      "namespace": "cloudposse",
+      "name": "utils",
+      "minimal_version": "1.23",
+      "versions": [
+        "1.12.0"
       ]
     },
     {

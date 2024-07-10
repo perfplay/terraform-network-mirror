@@ -1,9 +1,12 @@
+#!/usr/bin/env python3
+
 import json
 import argparse
+import requests
+
 from packaging import version, specifiers
 from Provider import Provider
 from CustomLogger import CustomLogger
-import requests
 
 logger = CustomLogger()
 
@@ -34,15 +37,20 @@ def fetch_versions(namespace, provider, registry_url, minimal_version=None, vali
         response = requests.get(registry_url_with_path)
         response.raise_for_status()
         versions = response.json().get('versions', [])
-        sorted_versions = sorted([version.parse(ver['version']) for ver in versions])
 
         filtered_versions = []
-        for ver in sorted_versions:
-            if minimal_version is None or ver >= minimal_version:
-                filtered_versions.append(ver)
-            elif valid_versions and ver in valid_versions:
-                filtered_versions.append(ver)
-        logger.info(f"Fetched versions for {namespace}/{provider}: {[str(ver) for ver in filtered_versions]}")
+        for ver in versions:
+            try:
+                parsed_version = version.parse(ver['version'])
+                if valid_versions and parsed_version in valid_versions:
+                    filtered_versions.append(parsed_version)
+                elif minimal_version is None or parsed_version >= minimal_version:
+                    filtered_versions.append(parsed_version)
+            except version.InvalidVersion as e:
+                logger.warning(f"Invalid version: {ver['version']} - {e}")
+
+        filtered_versions.sort()
+        logger.info(f"Fetched versions for {namespace}/{provider}: {filtered_versions}")
         return filtered_versions
     except requests.RequestException as e:
         logger.error(f"Failed to fetch versions for {namespace}/{provider}: {e}")

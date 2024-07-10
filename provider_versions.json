@@ -1,0 +1,19 @@
+{
+  "providers": [
+    {
+      "namespace": "hashicorp",
+      "name": "aws",
+      "versions": [
+        "5.42.0",
+        "5.50+"
+      ]
+    },
+    {
+      "namespace": "hashicorp",
+      "name": "null",
+      "versions": [
+        "3.2+"
+      ]
+    }
+  ]
+}

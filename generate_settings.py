@@ -2,11 +2,14 @@
 
 import json
 import argparse
+import subprocess
+
 import requests
 
-from packaging import version, specifiers
+from packaging import version
 from Provider import Provider
 from CustomLogger import CustomLogger
+from Utils import run_subprocess_popen, is_semantic_version
 
 logger = CustomLogger()
 
@@ -17,6 +20,7 @@ def parse_args():
     parser.add_argument('--registry-url',
                         default="https://registry.terraform.io",
                         help='Terraform registry URL')
+    parser.add_argument('--run-mirror-creation', action='store_true', help='Run mirror creation for all providers')
     return parser.parse_args()
 
 
@@ -42,6 +46,9 @@ def fetch_versions(namespace, provider, registry_url, minimal_version=None, vali
         for ver in versions:
             try:
                 parsed_version = version.parse(ver['version'])
+                if not is_semantic_version(ver['version']):
+                    logger.warning(f"Non-semantic version: {ver['version']}")
+                    continue
                 if valid_versions and parsed_version in valid_versions:
                     filtered_versions.append(parsed_version)
                 elif minimal_version is None or parsed_version >= minimal_version:
@@ -81,6 +88,8 @@ def generate_json(namespace, provider, registry_url, minimal_version=None, valid
     except IOError as e:
         logger.error(f"Failed to write JSON file: {e}")
 
+    return filename
+
 
 def main():
     args = parse_args()
@@ -100,13 +109,51 @@ def main():
         )
         providers.append(provider)
 
+    json_files = []
     for provider in providers:
         logger.info(f"Processing provider: {provider.namespace}/{provider.name}")
         logger.info(f"Minimal version for {provider.namespace}/{provider.name}: {[str(provider.parsed_minimal_version)]}")
         logger.info(f"Also valid versions for {provider.namespace}/{provider.name}: {[str(ver) for ver in provider.valid_parsed_versions]}")
 
-        generate_json(provider.namespace, provider.name, args.registry_url,
+        json_path = generate_json(provider.namespace, provider.name, args.registry_url,
                       provider.parsed_minimal_version, provider.valid_parsed_versions)
+        json_files.append(json_path)
+
+    logger.info(f"Generated JSON files: {json_files}")
+
+
+    if args.run_mirror_creation:
+        failed_results = []
+        logger.info("Running mirror creation for all providers")
+        for json_file in json_files:
+            if json_file:
+                logger.info(f"Running mirror creation for {json_file}")
+                command = ["./create-mirror.sh", json_file]
+                logger.info(f"Running command: {command}")
+                try:
+                    result = run_subprocess_popen(command)
+
+                    if result.returncode != 0:
+                        logger.error(f"Command failed with return code {result.returncode}")
+                        failed_results.append((json_file, result.returncode))
+
+                except subprocess.CalledProcessError as e:
+                    logger.error(
+                        f"Command failed with return code {e.returncode}, stdout: {e.stdout}, stderr: {e.stderr}")
+                    failed_results.append((json_file, str(e)))
+                except FileNotFoundError as e:
+                    logger.error(f"Command not found: {e}")
+                    failed_results.append((json_file, str(e)))
+                except Exception as e:
+                    logger.error(f"An unexpected error occurred: {e}")
+                    failed_results.append((json_file, str(e)))
+
+        logger.info("Mirror creation completed.")
+
+        if failed_results:
+            logger.error("Failed to create mirrors for the following JSON files:")
+            for json_file, error in failed_results:
+                logger.error(f"{json_file}: {error}")
 
 
 if __name__ == "__main__":

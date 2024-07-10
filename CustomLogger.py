@@ -11,7 +11,7 @@ class CustomLogger:
 
     @staticmethod
     def setup_logging():
-        log_level = os.getenv('PY_LOG_LEVEL', 'DEBUG').upper()
+        log_level = os.getenv('PY_LOG_LEVEL', 'INFO').upper()
         log_format = os.getenv('PY_LOG_FORMAT', '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         date_format = os.getenv('PY_DATE_FORMAT', '%Y-%m-%d %H:%M:%S')
 

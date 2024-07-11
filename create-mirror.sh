@@ -66,46 +66,6 @@ EOF
   rm main.tf
 }
 
-generate_json(){
-  local provider_namespace=$1
-  local provider_name=$2
-  local provider_version=$3
-  local base_dir="${registry}/${provider_namespace}/${provider_name}"
-  local versions_file="${base_dir}/versions.json"
-
-  local new_version_data=$(jq -n --arg version "$provider_version" --arg platform "$platform" '
-    {
-      "version": $version,
-      "protocols": ["5.0"],
-      "platforms": [{"os": ($platform | split("_") | .[0]), "arch": ($platform | split("_") | .[1])}]
-    }')
-
-  if [[ -f "$versions_file" ]]; then
-    tmp_file=$(mktemp)
-    jq --argjson new_version "$new_version_data" '
-      .versions |= (
-        map(
-          if .version == $new_version.version then
-            .platforms += $new_version.platforms | unique
-          else
-            .
-          end
-        ) + if (map(.version) | index($new_version.version)) == null then
-          [$new_version]
-        else
-          []
-        end
-      )' "$versions_file" > "$tmp_file" && mv "$tmp_file" "$versions_file"
-  else
-    mkdir -p "$base_dir"
-    jq -n --argjson new_version "$new_version_data" --arg id "${provider_namespace}/${provider_name}" '
-      {
-        "id": $id,
-        "versions": [$new_version]
-      }' > "$versions_file"
-  fi
-}
-
 settings_json=$(cat "${settings_file}")
 providers=$(echo "${settings_json}" | jq '[ .providers[] ]')
 provider_names=$(echo "${settings_json}" | jq '[ .providers[].name ]')
@@ -134,7 +94,6 @@ for row in $(echo "${providers}" | jq -r '.[] | [.namespace, .name, .versions] |
     v=${version}
 
     download_provider "$ns" "$n" "$v"
-    generate_json "$ns" "$n" "$v"
   done
 done
 
